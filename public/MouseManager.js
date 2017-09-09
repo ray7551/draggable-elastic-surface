@@ -28,7 +28,6 @@ class MouseManager {
     this.isPressing = true;
   }
   addDownListener(cb) {
-    console.log('mousedown');
     this.dom.addEventListener('mousedown', cb, false);
   }
 

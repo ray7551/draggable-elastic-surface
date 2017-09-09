@@ -3,7 +3,7 @@ const createOrbitViewer = require('three-orbit-viewer')(THREE);
 const glslify = require('glslify');
 const MouseManager = require('./MouseManager');
 
-var audio = new Audio('https://cdn.glitch.com/a7e5950b-6ba6-4ecd-9a13-c6864732a451%2Fboing.wav?1504900146364');
+var audio = new Audio('https://cdn.glitch.com/a7e5950b-6ba6-4ecd-9a13-c6864732a451%2Fboing.mp3?1504947644759');
 
 //our basic full-screen application and render loop
 let time = 0;
@@ -16,11 +16,11 @@ const app = createOrbitViewer({
 app.scene.background = new THREE.Color(0xFFFFFF);
 // console.log(app);
 
+
 //load up a test image
-const tex = new THREE.TextureLoader().load('https://cdn.glitch.com/a7e5950b-6ba6-4ecd-9a13-c6864732a451%2Fid.png?1504896705840', ready);
-// console.log(glslify('./frag.glsl'));
-//here we create a custom shader with glslify
-//note USE_MAP is needed to get a 'uv' attribute
+const tex = new THREE.TextureLoader().load('https://cdn.glitch.com/a7e5950b-6ba6-4ecd-9a13-c6864732a451%2Fid.png?1504946992645', ready);
+tex.minFilter = THREE.LinearFilter;
+
 const shaderMat = new THREE.ShaderMaterial({
   vertexShader: glslify('./vert.glsl'),
   fragmentShader: glslify('./frag.glsl'),
@@ -63,13 +63,11 @@ const wireframeMat = new THREE.ShaderMaterial({
   // side: THREE.DoubleSide
 });
 
-
-
 //once texture is ready, show our box
 function ready() {
-  console.log(tex);
+  // console.log(tex);
 
-  let spacing = 30;
+  const spacing = 20;
   //make a box, hidden until the texture has loaded
   const geo = new THREE.PlaneGeometry(
     tex.image.width/10, tex.image.height/10,
@@ -82,6 +80,7 @@ function ready() {
     shaderMat,
     wireframeMat
   ]);
+
   // card.rotation.y = -Math.PI;
   app.scene.add(card);
   app.camera.lookAt(card.position);
@@ -109,15 +108,9 @@ function ready() {
     dragPlane.lookAt(app.camera.position);
 
     if(isGrabbing) {
-      // intersectObject.worldToLocal(grabCenter);
-      // shaderMat.uniforms.uMousePosition = new THREE.Uniform(grabCenter.clone());
-      // shaderMat.uniforms.uMousePosition = new THREE.Uniform(mouse.position);
-      // console.log('mousePosition:', shaderMat.uniforms.uMousePosition);
       let target = getTargetPoint();
       shaderMat.uniforms.uTarget = new THREE.Uniform(target);
       shaderMat.needsUpdate = true;
-      // console.log('grabCenter value:', shaderMat.uniforms.uGrabCenter.value);
-      // console.log('target:', target);
       return;
     }
 
@@ -136,7 +129,7 @@ function ready() {
     if(intersects.length && !INTERSECTED) {
       INTERSECTED = intersects[0];
       canvas.classList.add('grabbable');
-      console.log('intersects', intersects);
+      // console.log('intersects', intersects);
       intersectObject = intersects[0].object;
       intersectGeometry = intersectObject.geometry;
     }
@@ -169,15 +162,12 @@ function ready() {
       intersectFace.color.setRGB(0.8, 0, 0); 
       intersectGeometry.colorsNeedUpdate = true;
       canvas.classList.add('grabbing');
-      // console.log(intersectFace);
-      // console.log(intersectGeometry)
-      // console.log(intersectGeometry.vertices[intersectFace.a]);
 
       // let grabP = intersectGeometry.vertices[intersectFace.a];
       shaderMat.uniforms.uGrabCenter = new THREE.Uniform(grabCenter.clone());
       shaderMat.uniforms.uGrabStart.value = time;
       shaderMat.uniforms.uReleaseStart.value = 0.0;
-      console.log('grabCenter:', shaderMat.uniforms.uGrabCenter.value);
+      // console.log('grabCenter:', shaderMat.uniforms.uGrabCenter.value);
     }
   });
   mouse.addUpListener((e) => {
