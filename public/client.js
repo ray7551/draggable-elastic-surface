@@ -1,70 +1,79 @@
 const THREE = require('three');
 const createOrbitViewer = require('three-orbit-viewer')(THREE);
-const glslify = require('glslify');
+const Assets = require('./Assets');
 const MouseManager = require('./MouseManager');
 
-var audio = new Audio('https://cdn.glitch.com/a7e5950b-6ba6-4ecd-9a13-c6864732a451%2Fboing.mp3?1504947644759');
+// Orbit - left mouse / touch: one finger move
+// Zoom - middle mouse, or mousewheel / touch: two finger spread or squish
+// Pan - right mouse, or arrow keys / touch: three finter swipe
 
 //our basic full-screen application and render loop
 let time = 0;
 const app = createOrbitViewer({
   clearColor: 0x000000,
-  clearAlpha: 1.0,
+  clearAlpha: 0.0,
   fov: 70,
   position: new THREE.Vector3(0, 0, 100)
 });
-app.scene.background = new THREE.Color(0xFFFFFF);
+// app.scene.background = new THREE.Color(0xEEFFEE);
 // console.log(app);
 
+let assets = new Assets();
+assets.load([{
+    key: 'audio-boing',
+    url: 'https://cdn.glitch.com/a7e5950b-6ba6-4ecd-9a13-c6864732a451%2Fboing.mp3?1504947644759',
+    loader: THREE.AudioLoader
+  }, {
+    key: 'tex-id',
+    // url: './id.png',
+    url: 'https://cdn.glitch.com/a7e5950b-6ba6-4ecd-9a13-c6864732a451%2Fid.png?1504946992645',
+    loader: THREE.TextureLoader
+  }, {
+    key: 'file-vs',
+    url: './vert.glsl',
+    loader: THREE.FileLoader
+}, {
+    key: 'file-fs',
+    url: './frag.glsl',
+    loader: THREE.FileLoader
+}]).then(ready);
 
-//load up a test image
-const tex = new THREE.TextureLoader().load('https://cdn.glitch.com/a7e5950b-6ba6-4ecd-9a13-c6864732a451%2Fid.png?1504946992645', ready);
-tex.minFilter = THREE.LinearFilter;
 
-const shaderMat = new THREE.ShaderMaterial({
-  vertexShader: glslify('./vert.glsl'),
-  fragmentShader: glslify('./frag.glsl'),
-  uniforms: {
-    iChannel0: { type: 't', value: tex },
-    uGrabCenter: new THREE.Uniform(new THREE.Vector3(0, 0, 0)),
-    uTraget: new THREE.Uniform(new THREE.Vector3(0, 0, 0)),
-    // uMousePosition: new THREE.Uniform(new THREE.Vector2(0, 0)),
-    uTime: { type: 'f', value: 0 },
-    uGrabStart: new THREE.Uniform(0.0),
-    uReleaseStart: new THREE.Uniform(0.0),
-    // uResolution: new THREE.Uniform(new THREE.Vector2(
-    //   app.renderer.domElement.clientWidth,
-    //   app.renderer.domElement.clientHeight
-    // )),
-  },
-  transparent: true,
-  extensions: {
-    derivatives: true
-  },
-  // wireframe: true,
-  side: THREE.DoubleSide
-});
-const wireframeMat = new THREE.ShaderMaterial({
-  vertexShader: `
-    varying vec3 vColor;
-    void main(){
-        vColor = color;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    }
-  `,
-  fragmentShader: `
-    varying vec3 vColor;
-    void main() {
-      gl_FragColor = vec4(vColor, 0.5);
-    }`,
-  transparent: true,
-  vertexColors: THREE.VertexColors,
-  wireframe: true,
-  // side: THREE.DoubleSide
-});
-
-//once texture is ready, show our box
 function ready() {
+  const tex = assets.get('tex-id');
+  tex.minFilter = THREE.LinearFilter;
+
+  const audioBuffer = assets.get('audio-boing');
+  // a global audio source
+  const audioListener = new THREE.AudioListener();
+  // add the listener to the camera
+  app.camera.add(audioListener);
+  const boingSound = new THREE.Audio(audioListener);
+  boingSound.setBuffer(audioBuffer);
+
+  const shaderMat = new THREE.ShaderMaterial({
+    vertexShader: assets.get('file-vs'),
+    fragmentShader: assets.get('file-fs'),
+    uniforms: {
+      iChannel0: { type: 't', value: tex },
+      uGrabCenter: new THREE.Uniform(new THREE.Vector3(0, 0, 0)),
+      uTraget: new THREE.Uniform(new THREE.Vector3(0, 0, 0)),
+      // uMousePosition: new THREE.Uniform(new THREE.Vector2(0, 0)),
+      uTime: { type: 'f', value: 0 },
+      uGrabStart: new THREE.Uniform(0.0),
+      uReleaseStart: new THREE.Uniform(0.0),
+      // uResolution: new THREE.Uniform(new THREE.Vector2(
+      //   app.renderer.domElement.clientWidth,
+      //   app.renderer.domElement.clientHeight
+      // )),
+    },
+    transparent: true,
+    extensions: {
+      derivatives: true
+    },
+    // wireframe: true,
+    side: THREE.DoubleSide
+  });
   // console.log(tex);
 
   const spacing = 20;
@@ -76,10 +85,7 @@ function ready() {
   );
   console.log('seg', geo.parameters.widthSegments, geo.parameters.heightSegments);
 
-  const card = new THREE.Mesh(geo, [
-    shaderMat,
-    wireframeMat
-  ]);
+  const card = new THREE.Mesh(geo, shaderMat);
 
   // card.rotation.y = -Math.PI;
   app.scene.add(card);
@@ -134,9 +140,9 @@ function ready() {
       intersectGeometry = intersectObject.geometry;
     }
     // mouse moving within the card
-    if(intersects.length && !mouse.isPressing) {
+    if(intersects.length) {
       grabCenter = intersects[0].point;
-      // console.log('change grabCenter', grabCenter);
+      console.log('change grabCenter', grabCenter);
       let faceI = intersects[0].faceIndex;
       intersectFace = intersectGeometry.faces[faceI];
     }
@@ -155,6 +161,7 @@ function ready() {
   }
 
   mouse.addDownListener((e) => {
+    updateCardIntersect();
     if(INTERSECTED) {
       // grabbing start
       isGrabbing = true;
@@ -164,6 +171,7 @@ function ready() {
       canvas.classList.add('grabbing');
 
       // let grabP = intersectGeometry.vertices[intersectFace.a];
+      console.log('resend grabCenter', grabCenter.clone());
       shaderMat.uniforms.uGrabCenter = new THREE.Uniform(grabCenter.clone());
       shaderMat.uniforms.uGrabStart.value = time;
       shaderMat.uniforms.uReleaseStart.value = 0.0;
@@ -180,8 +188,8 @@ function ready() {
       app.controls.noRotate = false;
       
       // if the audio is playing, rewind to start point
-      if(!audio.paused) audio.currentTime = 0;
-      audio.play();
+      if(boingSound.isPlaying) boingSound.stop();
+      boingSound.play();
     }
     if(intersectFace) {
       intersectFace.color.setRGB(1, 1, 1); 

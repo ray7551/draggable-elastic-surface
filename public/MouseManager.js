@@ -5,37 +5,69 @@ class MouseManager {
     if(MouseManager.instance) {
       return MouseManager.instance;
     }
-    this.position = new THREE.Vector2();
-    domElement.addEventListener('mousemove', this.onMove.bind(this), false);
-    domElement.addEventListener('mousedown', this.onDown.bind(this), false);
-    domElement.addEventListener('mouseup' , this.onUp.bind(this), false);
+    
     this.dom = domElement;
+    this.position = new THREE.Vector2();
+    
+    this.addMoveListener(this.onMove.bind(this));
+    this.addDownListener(this.onDown.bind(this));
+    this.addUpListener(this.onUp.bind(this));
     this.isPressing = false;
 
     MouseManager.instance = this;
   }
+  
+  updatePosition(clientX, clientY) {
+    this.position.x = (clientX / this.dom.clientWidth) * 2 - 1;
+    this.position.y = -(clientY / this.dom.clientHeight) * 2 + 1;
+  }
 
   onMove(e) {
+    let x,y;
+    if (e.targetTouches) {
+      // e.preventDefault();
+      // console.log('touchmove');
+      x = e.targetTouches[0].clientX;
+      y = e.targetTouches[0].clientY;
+      // console.log(x,y);
+    } else {
+      x = e.clientX;
+      y = e.clientY;
+    }
+    this.updatePosition(x, y);
     // e.preventDefault();
-    this.position.x = (e.clientX / this.dom.clientWidth) * 2 - 1;
-    this.position.y = -(e.clientY / this.dom.clientHeight) * 2 + 1;
   }
   addMoveListener(cb) {
-    this.dom.addEventListener('mousemove', cb, false);
+    ['mousemove', 'touchmove'].forEach(evtName => {
+      this.dom.addEventListener(evtName, cb, false);
+    });
   }
 
-  onDown() {
+  onDown(e) {
     this.isPressing = true;
+    if(e.targetTouches) {
+      let x = e.targetTouches[0].clientX;
+      let y = e.targetTouches[0].clientY;
+      this.updatePosition(x, y);
+      // console.log('touchstart', e.targetTouches[0].clientX, e.targetTouches[0].clientX)
+    };
   }
   addDownListener(cb) {
-    this.dom.addEventListener('mousedown', cb, false);
+    ["mousedown", "touchstart"].forEach(evtName => {
+      this.dom.addEventListener(evtName, cb, false);
+    });
   }
 
-  onUp() {
+  onUp(e) {
+    if(e.targetTouches) {
+      // console.log('touchend');
+    }
     this.isPressing = false;
   }
   addUpListener(cb) {
-    this.dom.addEventListener('mouseup', cb, false);
+    ["mouseup", "touchend"].forEach(evtName => {
+      this.dom.addEventListener(evtName, cb, false);
+    });
   }
 
   addLeaveListener(cb) {
