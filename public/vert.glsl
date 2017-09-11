@@ -9,12 +9,13 @@ varying vec3 vNorm;
 varying vec2 vUv;
 
 #define PI 3.14159
-#define radius 24.0
+#define radius 14.0
 #define maxZ 29.0
-#define decayExp 4.1
+#define decayExp 3.5
 #define upDuration 0.1
 #define downDuration 0.8
-#define bouncy 500.0
+// the render freq is about 50, so if you want more realistic effect, bounce freq should not like 25.0 / 50.0
+#define bounceFreq 12.0
 
 float decay(float f) {
   return max(0.0, pow(
@@ -29,13 +30,15 @@ float grabForce(vec2 p) {
 void main() {
   vUv = uv;
   float force = grabForce(position.xy);
-  vec3 initOffset = (uTarget - position.xyz) * 0.5 * force;
+  // I don't know why (uTarget - position.xyz) here will cause a spike shape
+  // vec3 initOffset = (uTarget - position.xyz) * 1.0 * force;
+  vec3 initOffset = (uTarget - uGrabCenter.xyz) * 1.0 * force;
   vec3 offset;
   if(uReleaseStart > 0.0) {
     float releaseTime = min(uReleaseStart, uTime - uReleaseStart);
     offset = initOffset
       * decay(releaseTime / downDuration) * sin(
-        clamp(releaseTime / downDuration, 0.0, 1.0) * bouncy
+        clamp(releaseTime / downDuration, 0.0, 1.0) * bounceFreq * (2.0*PI)
       ); // grab release animation
   } else {
     offset = initOffset;
