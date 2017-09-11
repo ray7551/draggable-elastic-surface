@@ -7,7 +7,7 @@ class MouseManager {
     }
     
     this.dom = domElement;
-    this.position = new THREE.Vector2();
+    this.position = new THREE.Vector2(0, 0);
     
     this.addMoveListener(this.onMove.bind(this));
     this.addDownListener(this.onDown.bind(this));

@@ -5,7 +5,7 @@ const MouseManager = require('./MouseManager');
 
 // Orbit - left mouse / touch: one finger move
 // Zoom - middle mouse, or mousewheel / touch: two finger spread or squish
-// Pan - right mouse, or arrow keys / touch: three finter swipe
+// Pan - right mouse, or arrow keys / touch: three finger swipe
 
 //our basic full-screen application and render loop
 let time = 0;
@@ -57,7 +57,7 @@ function ready() {
     uniforms: {
       iChannel0: { type: 't', value: tex },
       uGrabCenter: new THREE.Uniform(new THREE.Vector3(0, 0, 0)),
-      uTraget: new THREE.Uniform(new THREE.Vector3(0, 0, 0)),
+      uTarget: new THREE.Uniform(new THREE.Vector3(0, 0, 0)),
       // uMousePosition: new THREE.Uniform(new THREE.Vector2(0, 0)),
       uTime: { type: 'f', value: 0 },
       uGrabStart: new THREE.Uniform(0.0),
@@ -71,7 +71,7 @@ function ready() {
     extensions: {
       // derivatives: true
     },
-    // wireframe: true,
+    // wireframe: true, // open it for debug
     side: THREE.DoubleSide
   });
   // console.log(tex);
@@ -92,7 +92,7 @@ function ready() {
   app.camera.lookAt(card.position);
 
   // create an (invisible) plane to drag the vertices on
-  var dragPlane = new THREE.Mesh(
+  let dragPlane = new THREE.Mesh(
     new THREE.PlaneGeometry(5000, 5000),
     new THREE.MeshBasicMaterial({
       color: 0xFF0000, transparent: true, opacity: 0.0,
@@ -108,9 +108,9 @@ function ready() {
   const mouse = new MouseManager(app.renderer.domElement);
   const canvas = app.renderer.domElement;
   let intersect = null; // mouse intersect with card
-  let intersectObject, grabCenter, intersectGeometry, intersectFace;
+  let grabCenter = new THREE.Vector3(0, 0, 0);
   let isGrabbing = false;
-  mouse.addMoveListener((e) => {
+  mouse.addMoveListener(() => {
     dragPlane.lookAt(app.camera.position);
 
     if(isGrabbing) {
@@ -129,64 +129,61 @@ function ready() {
     raycaster.setFromCamera(mouse.position, app.camera);
     let intersects = raycaster.intersectObject(card);
 
-    // enter card area
-    if(intersects.length && !intersect) {
-      intersect = intersects[0];
-      canvas.classList.add('grabbable');
-      // console.log('intersects', intersects);
-      intersectObject = intersect.object;
-      intersectGeometry = intersectObject.geometry;
-      return;
-    }
-    // mouse moving within the card
     if(intersects.length) {
+      // enter card area
+      if(!intersect) {
+        intersect = intersects[0];
+        canvas.classList.add('grabbable');
+        // console.log('intersects', intersects);
+        return;
+      }
+
+      // mouse moving within the card
       intersect = intersects[0];
       grabCenter = intersect.point;
       // console.log('change grabCenter', grabCenter);
-      let faceI = intersect.faceIndex;
-      intersectFace = intersectGeometry.faces[faceI];
-      return;
-    }
-    // out of card
-    if(!intersects.length && intersect) {
+
+    } else if (intersect) {
+      // out of card
       intersect = null;
       canvas.classList.remove('grabbable');
-      return;
     }
   }
 
   // update mouse and dragPlane intersection
-  function updateTargetPoint() {
+  function updateTargetPoint(offset = 0) {
     raycaster.setFromCamera(mouse.position, app.camera);
     let intersects = raycaster.intersectObject(dragPlane);
     if(intersects.length) {
       let target = intersects[0].point.clone();
-      shaderMat.uniforms.uTarget = new THREE.Uniform(target);
+      let offsetV = offset
+        ? app.camera.position.clone().sub(target).multiplyScalar(offset)
+        : new THREE.Vector3(0, 0, 0);
+      shaderMat.uniforms.uTarget = new THREE.Uniform(target.clone().add(offsetV));
       shaderMat.needsUpdate = true;
-      // console.log('target updated: ', target);
+      // console.log('offset', offsetV);
+      console.log('target updated: ', shaderMat.uniforms.uTarget.value);
     }
   }
 
-  mouse.addDownListener((e) => {
+  mouse.addDownListener(() => {
     updateCardIntersect();
     if(intersect) {
-      updateTargetPoint();
       // grabbing start
       isGrabbing = true;
       app.controls.noRotate = true;
-      intersectFace.color.setRGB(1.0, 0, 0); 
-      intersectGeometry.colorsNeedUpdate = true;
       canvas.classList.add('grabbing');
 
-      // let grabP = intersectGeometry.vertices[intersectFace.a];
+      updateCardIntersect();
       console.log('resend grabCenter', grabCenter.clone());
       shaderMat.uniforms.uGrabCenter = new THREE.Uniform(grabCenter.clone());
       shaderMat.uniforms.uGrabStart.value = time;
       shaderMat.uniforms.uReleaseStart.value = 0.0;
+      updateTargetPoint(0.5);
       // console.log('grabCenter:', shaderMat.uniforms.uGrabCenter.value);
     }
   });
-  mouse.addUpListener((e) => {
+  mouse.addUpListener(() => {
     if(isGrabbing) {
       // release grab
       isGrabbing = false;
@@ -199,9 +196,7 @@ function ready() {
       if(boingSound.isPlaying) boingSound.stop();
       boingSound.play();
     }
-    if(intersectFace) {
-      intersectFace.color.setRGB(1, 1, 1); 
-      intersectGeometry.colorsNeedUpdate = true;
+    if(intersect) {
       canvas.classList.remove('grabbing');
     }
   });
@@ -218,6 +213,5 @@ function ready() {
     // console.log(dt);
     time += dt / 1000;
     shaderMat.uniforms.uTime.value = time;
-      // shaderMat.needsUpdate = true;
   });
 }
