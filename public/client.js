@@ -15,8 +15,6 @@ const app = createOrbitViewer({
   fov: 70,
   position: new THREE.Vector3(0, 0, 100)
 });
-// app.scene.background = new THREE.Color(0xEEFFEE);
-// console.log(app);
 
 let assets = new Assets();
 assets.load([{
@@ -162,7 +160,7 @@ function ready() {
       shaderMat.uniforms.uTarget = new THREE.Uniform(target.clone().add(offsetV));
       shaderMat.needsUpdate = true;
       // console.log('offset', offsetV);
-      console.log('target updated: ', shaderMat.uniforms.uTarget.value);
+      // console.log('target updated: ', shaderMat.uniforms.uTarget.value);
     }
   }
 
@@ -175,7 +173,6 @@ function ready() {
       canvas.classList.add('grabbing');
 
       updateCardIntersect();
-      console.log('resend grabCenter', grabCenter.clone());
       shaderMat.uniforms.uGrabCenter = new THREE.Uniform(grabCenter.clone());
       shaderMat.uniforms.uGrabStart.value = time;
       shaderMat.uniforms.uReleaseStart.value = 0.0;

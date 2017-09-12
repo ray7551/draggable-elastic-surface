@@ -9,22 +9,31 @@ varying vec3 vNorm;
 varying vec2 vUv;
 
 #define PI 3.14159
-#define radius 14.0
+#define initRadius 10.0
 #define maxZ 29.0
-#define decayExp 3.5
+#define decayExp 2.7
 #define upDuration 0.1
 #define downDuration 0.8
 // the render freq is about 50, so if you want more realistic effect, bounce freq should not like 25.0 / 50.0
 #define bounceFreq 12.0
 
-float decay(float f) {
-  return max(0.0, pow(
-    cos(clamp(f, 0.0, 1.0) * PI/2.0),
-    decayExp
-  ));
+#define dragDistance distance(uTarget, uGrabCenter);
+
+float decay(float f, float n) {
+  return exp(-3.0 * pow(abs(f), n));
+  // return pow(
+  //   cos(f * PI/2.0),
+  //   decayExp
+  // );
 }
 float grabForce(vec2 p) {
-  return decay(distance(p.xy, uGrabCenter.xy) / radius);
+  float radius = initRadius + 0.1 * distance(uTarget, uGrabCenter.xyz);
+  return decay(clamp(distance(p.xy, uGrabCenter.xy) / radius, 0.0, 1.0), decayExp);
+}
+float shrinkForce(vec2 p) {
+  float radius = initRadius + 0.1 * distance(uTarget, uGrabCenter.xyz);
+  // return 1.0 - decay(distance(p.xy, uGrabCenter.xy) / radius, decayExp);
+  return decay(distance(p.xy, uGrabCenter.xy) / radius, decayExp) / 1.4;
 }
 
 void main() {
@@ -32,12 +41,14 @@ void main() {
   float force = grabForce(position.xy);
   // I don't know why (uTarget - position.xyz) here will cause a spike shape
   // vec3 initOffset = (uTarget - position.xyz) * 1.0 * force;
-  vec3 initOffset = (uTarget - uGrabCenter.xyz) * 1.0 * force;
+  vec3 initOffset = (uTarget - uGrabCenter.xyz) * 0.95 * force;
+  // add translate toward grabCenter for all vertices
+  initOffset += (uGrabCenter - position.xyz) * 1.0 * shrinkForce(position.xy);
   vec3 offset;
   if(uReleaseStart > 0.0) {
     float releaseTime = min(uReleaseStart, uTime - uReleaseStart);
     offset = initOffset
-      * decay(releaseTime / downDuration) * sin(
+      * decay(releaseTime / downDuration, decayExp) * sin(
         clamp(releaseTime / downDuration, 0.0, 1.0) * bounceFreq * (2.0*PI)
       ); // grab release animation
   } else {
