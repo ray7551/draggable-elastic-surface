@@ -9,42 +9,87 @@
   <link id="favicon" rel="icon" href="https://cdn.glitch.com/a7e5950b-6ba6-4ecd-9a13-c6864732a451%2Ffavicon.ico?1504945503702" type="image/x-icon">
   <link id="apple-touch-icon" rel="apple-touch-icon" sizes="180x180" href="https://cdn.glitch.com/a7e5950b-6ba6-4ecd-9a13-c6864732a451%2Fapple-touch-icon.png?1504945506283">
   <style type="text/css">
-    *, *:before, *:after{box-sizing: border-box;}
-    html, body {width: 100%; height: 100%; overflow: hidden}
-    body {
-      background-color: rgba(0, 121, 192, 0.1);
-      background-image: -webkit-radial-gradient(rgba(255, 221, 192, 0.2) 0%, rgba(0, 121, 192, 0.4) 80%);
-      background-image: radial-gradient(rgba(255, 221, 192, 0.2) 0%, rgba(0, 121, 192, 0.4) 80%);
-    /*  background-size: 100vw 100vw, 100% 30%;
-      background-position: 50% -50vw, 50% 100%;*/
-    }
+*, *:before, *:after{box-sizing: border-box;}
+html, body {width: 100%; height: 100%; overflow: hidden}
+body {
+	background-color: rgba(0, 121, 192, 0.1);
+	background-image: -webkit-radial-gradient(rgba(255, 221, 192, 0.2) 0%, rgba(0, 121, 192, 0.4) 80%);
+	background-image: radial-gradient(rgba(255, 221, 192, 0.2) 0%, rgba(0, 121, 192, 0.4) 80%);
+/*  background-size: 100vw 100vw, 100% 30%;
+	background-position: 50% -50vw, 50% 100%;*/
+}
 
 
-    .unselectable {
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      user-select: none;
-    }
-    canvas {
-      cursor: default;
-    }
-    .grabbable {
-      cursor: move; /* fallback if grab cursor is unsupported */
-      cursor: grab;
-      cursor: -moz-grab;
-      cursor: -webkit-grab;
-    }
-    /* Apply a "closed-hand" cursor during drag operation. */
-    .grabbing {
-      cursor: grabbing!important;
-      cursor: -moz-grabbing!important;
-      cursor: -webkit-grabbing!important;
-    }
+.unselectable {
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	user-select: none;
+}
+canvas {
+	cursor: default;
+}
+.grabbable {
+	cursor: move; /* fallback if grab cursor is unsupported */
+	cursor: grab;
+	cursor: -moz-grab;
+	cursor: -webkit-grab;
+}
+/* Apply a "closed-hand" cursor during drag operation. */
+.grabbing {
+	cursor: grabbing!important;
+	cursor: -moz-grabbing!important;
+	cursor: -webkit-grabbing!important;
+}
+
+a{outline:0;color:#fff;text-decoration:none;}
+.author {
+  color:#fff;
+  filter: blur(1px);
+  font-size: 1.2em;
+  font-family: Arial, sans-serif;
+  font-weight: bold;
+  z-index: 1; position: absolute; bottom: 0; right: 0; padding: 0.4em;
+  background-color: rgba(0, 0, 0, 0.43);
+  -webkit-transition: all .56s cubic-bezier(0.93, 0.1, 1, 1);
+  -moz-transition: all .56s cubic-bezier(0.93, 0.1, 1, 1);
+  transition: all .56s cubic-bezier(0.93, 0.1, 1, 1);
+  -ms-transition: all .56s cubic-bezier(0.93, 0.1, 1, 1);
+}
+.author:hover {background-color: #000; filter: blur(0em);}
+.author p span {font-weight: normal;}
+.author p {
+  height: 0; margin: 0; overflow: hidden;
+  -webkit-transition: all .56s cubic-bezier(0.93, 0.1, 1, 1);
+  -moz-transition: all .56s cubic-bezier(0.93, 0.1, 1, 1);
+  transition: all .56s cubic-bezier(0.93, 0.1, 1, 1);
+  -ms-transition: all .56s cubic-bezier(0.93, 0.1, 1, 1);}
+.author:hover p {height: 1.2em; margin: .22em 0 0 .2em;}
+.fancy-underline a{
+  text-decoration:none;
+  -webkit-transition: all .13s linear;
+  -moz-transition: all .13s linear;
+  transition: all .13s linear;
+  -ms-transition: all .13s linear;
+  text-shadow: -1px 0 0 #000,
+    1px 0 0 #000,
+    -2px 0 0 #000,
+    2px 0 0 #000;
+}
+.fancy-underline a:hover {
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.0) 50%, #fff 50%) repeat-x 0 .96em;
+  background-size: .2em .2em;
+}
   </style>
 </head>
 <body>
-<div class="glitchButton" style="position:fixed;top:20px;right:20px"></div>
 <!-- <canvas id="canvas"></canvas> -->
+<footer class="fancy-underline author">
+	<span>Monster ID</span>
+	<p>
+		<span>by </span>
+		<a href="https://github.com/ray7551/sketch" target="_blank">ray7551</a>
+	</p>
+</footer>
 <script src="./bundle.js"></script>
 
 <script>
@@ -229,6 +274,5 @@
  	document.body.appendChild(a);
 })();
 </script>
-<script async src="https://button.glitch.me/button.js"></script>
 </body>
 </html>

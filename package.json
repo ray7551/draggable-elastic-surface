@@ -9,7 +9,8 @@
   "scripts": {
     "start": "npm run build && node server.js",
     "dev": "budo public/client.js:bundle.js -v -d public --live",
-    "build": "browserify public/client.js -t [ babelify --presets [ es2015 ] ] | uglifyjs -c -m > public/bundle.js"
+    "build": "browserify public/client.js -t [ babelify --presets [ es2015 ] ] | uglifyjs -c -m > public/bundle.js",
+    "publish": "surge -p ./public --domain elastic-card.surge.sh"
   },
   "dependencies": {
     "express": "^4.15.3",

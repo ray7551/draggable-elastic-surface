@@ -75,10 +75,8 @@ function ready() {
   // console.log(tex);
 
   const spacing = 20;
-  //make a box, hidden until the texture has loaded
   const geo = new THREE.PlaneGeometry(
     tex.image.width/10, tex.image.height/10,
-    // 5, 5
     Math.floor(tex.image.width / spacing), Math.floor(tex.image.height / spacing)
   );
   console.log('seg', geo.parameters.widthSegments, geo.parameters.heightSegments);
